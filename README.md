@@ -16,3 +16,7 @@ Running (Windows supported right now)
 To run the GUI from your computer, ensure that PyQt4 is installed properly and then navigate to the correct folder and then simply run the command
 python main_ui.py
 
+Installation (Windows supported right now)
+------------
+
+I will add installation instructions once there is a more concrete understanding of which libraries and software we will be using.
