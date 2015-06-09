@@ -2,6 +2,7 @@ import sys
 from PyQt4 import QtGui
 from update_ui import Ui_MainWindow
 import time
+import shlex
 import logging
 import subprocess
 import os
@@ -37,13 +38,20 @@ class Main(QtGui.QMainWindow):
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
 		self.writefiles()
-		self.ui.WatchButton.clicked.connect(self.btnSayHello)
-		self.ui.ClearButton.clicked.connect(self.btnClearTxt)
 		self.ui.btnRunYW.clicked.connect(self.btnStartYW)
 		self.ui.btnYWExtract.clicked.connect(self.btnYWExtract)
 		self.ui.btnYWGraph.clicked.connect(self.btnYWGraph)
 		self.ui.btnSortPy.clicked.connect(self.btnSortPy)
 		self.ui.btnShowAllFiles.clicked.connect(self.btnShowAllFiles)
+		self.test()
+		# txtOutput
+
+	def test(self):
+		test_command = 'dir'
+		p = subprocess.check_output(test_command, shell=True)
+		self.ui.txtOutput.insertPlainText(p)
+		print p
+
 
 	def btnSortPy(self):
 		self.ui.txtYWGraph.clear()
@@ -59,15 +67,11 @@ class Main(QtGui.QMainWindow):
 	def dataWatcher(self):
 		p = subprocess.Popen(command, )
 
-	def btnSayHello(self):
-		self.ui.WatchText.insertPlainText("Hello World\n")
-
-	def btnClearTxt(self):
-		self.ui.WatchText.clear()
-
 	def btnStartYW(self):
-		ywcommand = 'java -jar ' +  os.environ['YW_JAR_PATH'] + ' -h'
-		os.system(ywcommand)
+		ywcommand = ['java', '-jar', 'yesworkflow-jar.jar', '-h']
+		p = subprocess.Popen(ywcommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		(p_out, p_err) = p.communicate()
+		self.ui.WatchText.insertPlainText(p_err)
 
 	def btnYWExtract(self):
 		self.ui.txtErrorBox.clear()

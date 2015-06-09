@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>830</width>
-    <height>612</height>
+    <width>796</width>
+    <height>502</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,23 +20,6 @@
       <property name="currentIndex">
        <number>1</number>
       </property>
-      <widget class="QWidget" name="tab">
-       <attribute name="title">
-        <string>Tab 1</string>
-       </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
-        <item>
-         <widget class="QTextBrowser" name="WatchText"/>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btnRunYW">
-          <property name="text">
-           <string>Run YW</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
         <string>Tab 2</string>
@@ -92,10 +75,32 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Tab 1</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QTextBrowser" name="WatchText"/>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnRunYW">
+          <property name="text">
+           <string>Run YW</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="tab_3">
        <attribute name="title">
         <string>Page</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QTextBrowser" name="txtOutput"/>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -109,8 +114,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>401</width>
-         <height>551</height>
+         <width>384</width>
+         <height>441</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -142,10 +147,22 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>830</width>
+     <width>796</width>
      <height>21</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuYW_Commands">
+    <property name="title">
+     <string>View</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuYW_Commands"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
