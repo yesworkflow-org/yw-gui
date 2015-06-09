@@ -1,5 +1,5 @@
 import sys
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 from update_ui import Ui_MainWindow
 import time
 import shlex
@@ -11,9 +11,15 @@ from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 import threading
 
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    def _fromUtf8(s):
+        return s
+
 files = sorted([f for f in os.listdir('.') if os.path.isfile(f)])
 
-def fileWatcher():
+"""def fileWatcher():
 	logging.basicConfig(level=logging.INFO,
 						format='%(asctime)s - %(message)s',
 						datefmt='%Y-%m-%d %H:%M:%S')
@@ -29,7 +35,7 @@ def fileWatcher():
 	except KeyboardInterrupt:
 		observer.stop()
 	observer.daemon = True
-	observer.join()
+	observer.join()"""
 
 class Main(QtGui.QMainWindow):
 
@@ -44,7 +50,21 @@ class Main(QtGui.QMainWindow):
 		self.ui.btnSortPy.clicked.connect(self.btnSortPy)
 		self.ui.btnShowAllFiles.clicked.connect(self.btnShowAllFiles)
 		self.test()
-		# txtOutput
+		self.dirWatcher=threading.Thread(target=self.watchdog)
+		self.dirWatcher.daemon = True
+		self.dirWatcher.start()
+		self.ui.tabData.tabCloseRequested.connect(self.ui.tabData.removeTab)
+
+	def watchdog(self): # function does not work properly
+		#watch = subprocess.Popen('python monitor.py', stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+		watch = subprocess.Popen('python monitor.py')
+		"""while True:
+			line = watch.stdout.readline()
+			if not line:
+				continue
+			else:
+				print line
+				self.ui.txtWatch.insertPlainText(line)"""
 
 	def test(self):
 		test_command = 'dir'
@@ -70,8 +90,8 @@ class Main(QtGui.QMainWindow):
 	def btnStartYW(self):
 		ywcommand = ['java', '-jar', 'yesworkflow-jar.jar', '-h']
 		p = subprocess.Popen(ywcommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		(p_out, p_err) = p.communicate()
-		self.ui.WatchText.insertPlainText(p_err)
+		(p_err, p_out) = p.communicate()
+		self.ui.WatchText.insertPlainText(p_out)
 
 	def btnYWExtract(self):
 		self.ui.txtErrorBox.clear()
@@ -95,7 +115,9 @@ class Main(QtGui.QMainWindow):
 	def btnYWGraph(self):
 		self.ui.txtErrorBox.clear()
 		ywcommand = 'java -jar ' + os.environ['YW_JAR_PATH'] + ' graph '
-		ywinput = str(self.ui.txtYWGraph.currentItem().text())
+		ywinput = ''
+		if self.ui.txtYWGraph.currentItem():
+			ywinput = str(self.ui.txtYWGraph.currentItem().text())
 		print ywinput
 		if ywinput in files:
 			ywcommand += ywinput + ' | dot -Tsvg -o '
@@ -103,20 +125,18 @@ class Main(QtGui.QMainWindow):
 			ywinput += '.svg'
 			ywcommand += ywinput
 			os.system(ywcommand)
-			#ywcommand = 'start ' + ywinput
-			#os.system(ywcommand)
+			self.NewTab = QtGui.QWidget()
+			self.lbl_1 = QtGui.QLabel('')
+			self.layout = QtGui.QVBoxLayout(self.NewTab)
+			self.layout.addWidget(self.lbl_1)
+			self.ui.tabData.addTab(self.NewTab, ywinput)
 			pixmap = QtGui.QPixmap(ywinput)
-			self.ui.label_3.setPixmap(pixmap)
-
+			self.lbl_1.setPixmap(pixmap)
 		else:
 			error_message = "The file, " + ywinput + " is not located in the current directory"
 			self.ui.txtErrorBox.insertPlainText(error_message)
 
 if __name__ == '__main__':
-	#os.system('doskey yw=java -jar yesworkflow-jar $*')
-	dirWatcher = threading.Thread(target=fileWatcher)
-	dirWatcher.daemon = True
-	dirWatcher.start()
 	app = QtGui.QApplication(sys.argv)
 	window = Main()
 	window.show()
