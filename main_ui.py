@@ -1,5 +1,7 @@
 import sys
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtWebKit import *
+from PyQt4.QtSvg import *
 from update_ui import Ui_MainWindow
 import time, Queue
 import shlex
@@ -17,14 +19,15 @@ except AttributeError:
     def _fromUtf8(s):
         return s
 
-messageQueue = Queue.Queue()
+#graphs = dict()
 
 files = sorted([f for f in os.listdir('.') if os.path.isfile(f)])
 
 class Watch_Thread(QtCore.QThread):
 	updated = QtCore.pyqtSignal(str)
 	class MyHandler(PatternMatchingEventHandler):
-		patterns = ["*.py", "*.png", "*.svg"]
+		patterns = ["*.py"]
+		#patterns = []
 
 		def __init__(self, eventThread, patterns=None, ignore_patterns=None,
 	             ignore_directories=False, case_sensitive=False):
@@ -45,10 +48,11 @@ class Watch_Thread(QtCore.QThread):
 				path/to/observed/file
 			"""
 			# the file will be processed here
-			#print event.src_path, event.event_type #print now for debug
-			event_string = str(event.src_path) + ' ' + str(event.event_type) + ' ' + str(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())) + '\n'
+			#print event.src_path, event.event_type
+			#event_string = str(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())) + ' : '
+			event_string = str(event.src_path) + ' ' + str(event.event_type)
 			#print event_string
-			self.eventThread.updated.emit(event_string)			
+			self.eventThread.updated.emit(event_string)	
 
 		def on_modified(self, event):
 			self.process(event)
@@ -68,42 +72,91 @@ class Main(QtGui.QMainWindow):
 		QtGui.QMainWindow.__init__(self)
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
-		self.initfiles()
 		self.watcher_Thread = Watch_Thread(self)
-		self.watcher_Thread.updated.connect(self.update_WatchText)
+		self.watcher_Thread.updated.connect(self.WatchdogReceiver)
 		self.watcher_Thread.start()
 		self.ui.btnRunYW.clicked.connect(self.btnStartYW)
 		self.ui.btnYWExtract.clicked.connect(self.btnYWExtract)
 		self.ui.btnYWGraph.clicked.connect(self.btnYWGraph)
 		self.ui.btnSortPy.clicked.connect(self.btnSortPy)
 		self.ui.btnShowAllFiles.clicked.connect(self.btnShowAllFiles)
-		self.ui.btnSortPy_2.clicked.connect(self.btnSortPy_2)
-		self.ui.btnShowAllFiles_2.clicked.connect(self.btnShowAllFiles_2)
 		self.ui.btnClearWatchText.clicked.connect(self.btnClearWatchText)
-		self.ui.tabData.tabCloseRequested.connect(self.ui.tabData.removeTab)
-		#self.ui.tabData.tabBar.setTabsClosable(False)
+		self.ui.tabData.tabCloseRequested.connect(self.closeTab)
+		self.ui.tabData.connect(self.ui.tabData, QtCore.SIGNAL('currentChanged(int)'), self.update_tab_color)
+		self.graphCount = dict()
+		self.currentGraphs = dict()
+		self.initTabKeys()
+		self.initNewTabWidgets()
 
-	def initfiles(self):
-		for f in files:
-			if ".py" in f:
-				self.ui.txtYWGraph_2.addItem(f)
+	def update_tab_color(self, tab_index):
+		self.ui.tabData.tabBar().setTabTextColor(tab_index, QtCore.Qt.black)
+
+	def closeTab(self, index):
+		tabName = str(self.ui.tabData.tabText(index))
+		tabName = tabName.split('(')
+		tabName_temp = tabName[0]
+		tabName = tabName[1].split(')')
+		count = int(tabName[0])
+		self.graphCount[tabName_temp].remove(count)
+		self.currentGraphs[tabName_temp].remove(count)
+		self.ui.tabData.removeTab(index)
+
+	def initNewTabWidgets(self):
+		self.NewTab = dict()
+		self.lbl_1 = dict()
+		self.graphoptions = dict()
+		self.tabProcessView = dict()
+		self.tabDataView = dict()
+		self.tabCombinedView = dict()
+		self.tabShowWorkflowBox = dict()
+		self.tabNameLabel = dict()
+		self.tabURILabel = dict()
+		self.tabShowEdgeLabels = dict()
+		self.LR = dict()
+		self.RL = dict()
+		self.TB = dict()
+		self.BT = dict()
+		self.portGroup = dict()
+		self.portRelax = dict()
+		self.portHide = dict()
+		self.paraShow = dict()
+		self.paraReduce = dict()
+		self.paraHide = dict()
+		self.titleTop = dict()
+		self.titleBottom = dict()
+		self.titleHide = dict()
+		self.zoomIn = dict()
+		self.zoomOut = dict()
+		self.zoomNormal = dict()
+
+	def initTabKeys(self):
+		self.graphCount['YW Tools'] = 1
+		self.graphCount['Graph'] = 1
 
 	def btnClearWatchText(self):
 		self.ui.WatchText.clear()
 
-	def update_WatchText(self, text):
-		self.ui.WatchText.insertPlainText(text)
+	def WatchdogReceiver(self, text):
+		print text
+		received = text.split(' ')
+		change = str(received[1])
+		changed_file = str(received[0].split("\\")[-1])
+		changed_file = re.sub('\.py$', '', changed_file)
+		# ywinput = re.sub('\.py$', '', ywinput)
+		if changed_file in self.graphCount:
+			if change == "modified":
+				self.tryUpdatingGraphs(changed_file)
 
-	def btnSortPy_2(self):
-		self.ui.txtYWGraph_2.clear()
-		for f in files:
-			if ".py" in f:
-				self.ui.txtYWGraph_2.addItem(f)
-
-	def btnShowAllFiles_2(self):
-		self.ui.txtYWGraph_2.clear()
-		for f in files:
-			self.ui.txtYWGraph_2.addItem(f)
+	def tryUpdatingGraphs(self, ywinput):
+		# ywinput is the name of the file that was changed/modified
+		# function is called when a file that is graphed/rendered was modified
+		for number in self.graphCount[ywinput]:
+			graph = ywinput + '(' + str(number) + ').svg'
+			self.update_graph(graph)
+			i1 = self.ui.tabData.currentIndex()
+			i2 = self.ui.tabData.indexOf(self.NewTab[graph])
+			if i1 is not i2:
+				self.ui.tabData.tabBar().setTabTextColor(self.ui.tabData.indexOf(self.NewTab[graph]), QtCore.Qt.blue)
 
 	def btnSortPy(self):
 		self.ui.txtYWGraph.clear()
@@ -134,88 +187,39 @@ class Main(QtGui.QMainWindow):
 			ywcommand.append(ywinput)
 			ywcommand.append('-c')
 			ywcommand.append('extract.listfile')
-			#print ywcommand
 			p = subprocess.Popen(ywcommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 			(p_out, p_err) = p.communicate()
 			self.ui.txtErrorBox.insertPlainText(p_out)
 		else:
 			error_message = "The file, " + ywinput + " is not located in the current directory"
 			self.ui.txtErrorBox.insertPlainText(error_message)
-
-	def checkBoxes(self, pyfile):
-		returned = ''
-		if self.ui.btnProcessView.isChecked():
-			returned += ' -c ' + 'graph.view=PROCESS'
-		elif self.ui.btnDataView.isChecked():
-			returned += ' -c ' + 'graph.view=DATA'
-		elif self.ui.btnCombinedView.isChecked():
-			returned += ' -c ' + 'graph.view=COMBINED'
-		if self.ui.chkNameLabel.isChecked():
-			if self.ui.chkURILabel.isChecked():
-				returned += ' -c ' + 'graph.datalabel=BOTH'
-			else:
-				returned += ' -c ' + 'graph.datalabel=NAME'
-		elif self.ui.chkURILabel.isChecked():
-			returned += ' -c graph.datalabel=URI'
-		if self.ui.chkShowComments.isChecked():
-			returned += ' -c graph.dotcomments=SHOW'
-		if self.ui.btnLRLayout.isChecked():
-			returned += ' -c graph.layout=LR'
-		elif self.ui.btnRLLayout.isChecked():
-			returned += ' -c graph.layout=RL'
-		elif self.ui.btnTBLayout.isChecked():
-			returned += ' -c graph.layout=TB'
-		elif self.ui.btnBTLayout.isChecked():
-			returned += ' -c graph.layout=BT'
-		if self.ui.btnParamHide.isChecked():
-			returned += ' -c graph.params=HIDE'
-		elif self.ui.btnParamShow.isChecked():
-			returned += ' -c graph.params=SHOW'
-		elif self.ui.btnParamReduce.isChecked():
-			returned += ' -c graph.params=REDUCE'
-		if not self.ui.chkLabelShow.isChecked():
-			returned += ' -c graph.edgelabels=HIDE'
-		if not self.ui.chkWorkflowShow.isChecked():
-			returned += ' -c graph.workflowbox=HIDE'
-		if self.ui.btnPortGroup.isChecked():
-			returned += ' -c graph.portlayout=GROUP'
-		elif self.ui.btnPortHide.isChecked():
-			returned += ' -c graph.portlayout=HIDE'
-		elif self.ui.btnPortRelax.isChecked():
-			returned += ' -c graph.portlayout=RELAX'
-		if self.ui.btnRename.isChecked():
-			if self.ui.btnRename.text():
-				returned += ' -c graph.title='
-				returned += pyfile
-		if self.ui.btnTopTitle.isChecked():
-			returned += ' -c graph.titleposition=TOP'
-		elif self.ui.btnBottomTitle.isChecked():
-			returned += ' -c graph.titleposition=BOTTOM'
-		elif self.ui.btnHideTitle.isChecked():
-			returned += ' -c graph.titleposition=HIDE'
-		return returned
+		yw = 1
+		#print self.watcher_Thread.MyHandler.patterns
 
 	def btnYWGraph(self):
-		self.ui.txtErrorBox.clear()
-		ywcommand = 'java -jar ' + os.environ['YW_JAR_PATH'] + ' graph'
+		#self.ui.txtErrorBox.clear()
+		fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '.')
+		yw_fname = fname.split('/')[-1]
+		ywcommand = 'java -jar ' + os.environ['YW_JAR_PATH'] + ' graph '
 		ywinput = ''
-		if self.ui.txtYWGraph_2.currentItem():
-			ywinput = str(self.ui.txtYWGraph_2.currentItem().text())
+		ywinput = str(yw_fname)
+		print ywinput
 		if ywinput in files:
-			ywextension = self.checkBoxes(ywinput)
-			if self.ui.btnExport.isChecked():
-				if not self.ui.txtExportDOT.text():
-					filename = re.sub('\.py$', '', ywinput)
-					filename += '.gv'
-					returned += ' -c graph.dotfile=' + filename
-				else:
-					filename = str(self.ui.txtExportDOT.text())
-					returned += ' -c graph.dotfile=' + filename
-					returned += '.gv'
-			ywcommand += ywextension + ' '
 			ywcommand += ywinput + ' | dot -Tsvg -o '
 			ywinput = re.sub('\.py$', '', ywinput)
-			ywinput += '(' + str(self.ui.tabData.count()-1) + ')'
+			if ywinput not in self.graphCount:
+				self.graphCount[ywinput] = []
+				self.graphCount[ywinput].append(1)
+				count = 1
+				self.currentGraphs[ywinput] = []
+				self.watcher_Thread.MyHandler.patterns.append(ywinput)
+			else:
+				count = self.findNextHigher(ywinput)
+				self.graphCount[ywinput].append(count)
+			self.currentGraphs[ywinput].append(count)
+			ywinput += '('
+			ywinput += str(count)
+			ywinput += ')'
 			ywinput += '.svg'
 			ywcommand += ywinput
 			#print ywcommand
@@ -225,163 +229,243 @@ class Main(QtGui.QMainWindow):
 			error_message = "The file, " + ywinput + " is not located in the current directory"
 			self.ui.txtErrorBox.insertPlainText(error_message)
 
+	def findNextHigher(self, ywinput):
+		i = 1
+		while i in self.graphCount[ywinput]:
+			i += 1
+		return i
+
+
 	def makeNewTab(self, ywcommand, ywinput):
 		# adds a new tab to the tab widget
-		self.NewTab = QtGui.QWidget()
-		self.lbl_1 = QtGui.QLabel('')
-		self.hlayout_1 = QtGui.QHBoxLayout(self.NewTab)
-		self.graphoptions = QtGui.QVBoxLayout()
+		self.NewTab[ywinput] = QtGui.QTabWidget()
+		self.hlayout_1 = QtGui.QHBoxLayout(self.NewTab[ywinput])
+		self.graphoptions[ywinput] = QtGui.QVBoxLayout()
 		# add two vertical layouts placed side-by-side horizontally
 		self.lbl_2 = QtGui.QLabel('Graph Options')
-		self.graphoptions.addWidget(self.lbl_2)
-		# self.graphoptions are the graph options
+		self.graphoptions[ywinput].addWidget(self.lbl_2)
+		# self.graphoptions[ywinput] are the graph options
 		# self.vlayout_1 holds the label that displays the svg rendering
 		self.vlayout_1 = QtGui.QVBoxLayout()
 		# Add graph options
 
 		### Workflow View
 		self.workflowview = QtGui.QGroupBox('Workflow View')
-		self.tabProcessView = QtGui.QRadioButton('Process')
-		self.tabDataView = QtGui.QRadioButton('Data')
-		self.tabCombinedView = QtGui.QRadioButton('Combined')
+		self.tabProcessView[ywinput] = QtGui.QRadioButton('Process')
+		self.tabDataView[ywinput] = QtGui.QRadioButton('Data')
+		self.tabCombinedView[ywinput] = QtGui.QRadioButton('Combined')
+		self.tabProcessView[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
-		self.templayout.addWidget(self.tabProcessView)
-		self.templayout.addWidget(self.tabDataView)
-		self.templayout.addWidget(self.tabCombinedView)
-		self.tabProcessView.toggled.connect(self.update_graph_handler)
-		self.tabDataView.toggled.connect(self.update_graph_handler)
-		self.tabCombinedView.toggled.connect(self.update_graph_handler)
+		self.templayout.addWidget(self.tabProcessView[ywinput])
+		self.templayout.addWidget(self.tabDataView[ywinput])
+		self.templayout.addWidget(self.tabCombinedView[ywinput])
+		self.tabProcessView[ywinput].toggled.connect(lambda: self.update_graph_handler(self.tabProcessView[ywinput].isChecked, ywinput))
+		self.tabDataView[ywinput].toggled.connect(lambda: self.update_graph_handler(self.tabDataView[ywinput].isChecked, ywinput))
+		self.tabCombinedView[ywinput].toggled.connect(lambda: self.update_graph_handler(self.tabCombinedView[ywinput].isChecked, ywinput))
 		self.workflowview.setLayout(self.templayout)
-		self.graphoptions.addWidget(self.workflowview)
+		self.graphoptions[ywinput].addWidget(self.workflowview)
 
 		### Show Workflow Box
 		self.workflowbox = QtGui.QGroupBox('Workflow Box')
-		self.tabShowWorkflowBox = QtGui.QCheckBox('Show')
+		self.tabShowWorkflowBox[ywinput] = QtGui.QCheckBox('Show')
+		self.tabShowWorkflowBox[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
-		self.templayout.addWidget(self.tabShowWorkflowBox)
-		self.tabShowWorkflowBox.toggled.connect(self.update_graph)
+		self.templayout.addWidget(self.tabShowWorkflowBox[ywinput])
+		self.tabShowWorkflowBox[ywinput].toggled.connect(lambda: self.update_graph(ywinput))
 		self.workflowbox.setLayout(self.templayout)
-		self.graphoptions.addWidget(self.workflowbox)
+		self.graphoptions[ywinput].addWidget(self.workflowbox)
 
 		### Data Labels
 		self.datalabel = QtGui.QGroupBox('Data Label')
-		self.tabNameLabel = QtGui.QCheckBox('Name')
-		self.tabURILabel = QtGui.QCheckBox('URI')
+		self.tabNameLabel[ywinput] = QtGui.QCheckBox('Name')
+		self.tabURILabel[ywinput] = QtGui.QCheckBox('URI')
+		self.tabNameLabel[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
-		self.templayout.addWidget(self.tabNameLabel)
-		self.templayout.addWidget(self.tabURILabel)
-		self.tabNameLabel.toggled.connect(self.update_graph)
-		self.tabURILabel.toggled.connect(self.update_graph)
+		self.templayout.addWidget(self.tabNameLabel[ywinput])
+		self.templayout.addWidget(self.tabURILabel[ywinput])
+		self.tabNameLabel[ywinput].toggled.connect(lambda: self.update_graph(ywinput))
+		self.tabURILabel[ywinput].toggled.connect(lambda: self.update_graph(ywinput))
 		self.datalabel.setLayout(self.templayout)
-		self.graphoptions.addWidget(self.datalabel)
+		self.graphoptions[ywinput].addWidget(self.datalabel)
 
 		### Show Edge Labels
 		self.ShowEdgeLabel = QtGui.QGroupBox('Edge Labels')
-		self.tabShowEdgeLabels = QtGui.QCheckBox('Show')
+		self.tabShowEdgeLabels[ywinput] = QtGui.QCheckBox('Show')
+		self.tabShowEdgeLabels[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
-		self.templayout.addWidget(self.tabShowEdgeLabels)
-		self.tabShowEdgeLabels.toggled.connect(self.update_graph)
+		self.templayout.addWidget(self.tabShowEdgeLabels[ywinput])
+		self.tabShowEdgeLabels[ywinput].toggled.connect(lambda: self.update_graph(ywinput))
 		self.ShowEdgeLabel.setLayout(self.templayout)
-		self.graphoptions.addWidget(self.ShowEdgeLabel)
+		self.graphoptions[ywinput].addWidget(self.ShowEdgeLabel)
 
 		### Layout
 		self.LayoutBox = QtGui.QGroupBox('Layout')
-		self.LR = QtGui.QRadioButton('Left-Right')
-		self.RL = QtGui.QRadioButton('Right-Left')
-		self.TB = QtGui.QRadioButton('Top-Bottom')
-		self.BT = QtGui.QRadioButton('Bottom-Top')
+		self.LR[ywinput] = QtGui.QRadioButton('Left-Right')
+		self.RL[ywinput] = QtGui.QRadioButton('Right-Left')
+		self.TB[ywinput] = QtGui.QRadioButton('Top-Bottom')
+		self.BT[ywinput] = QtGui.QRadioButton('Bottom-Top')
+		self.LR[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
-		self.templayout.addWidget(self.LR)
-		self.templayout.addWidget(self.RL)
-		self.templayout.addWidget(self.TB)
-		self.templayout.addWidget(self.BT)
-		self.LR.toggled.connect(self.update_graph_handler)
-		self.RL.toggled.connect(self.update_graph_handler)
-		self.TB.toggled.connect(self.update_graph_handler)
-		self.BT.toggled.connect(self.update_graph_handler)
+		self.templayout.addWidget(self.LR[ywinput])
+		self.templayout.addWidget(self.RL[ywinput])
+		self.templayout.addWidget(self.TB[ywinput])
+		self.templayout.addWidget(self.BT[ywinput])
+		self.LR[ywinput].toggled.connect(lambda: self.update_graph_handler(self.LR[ywinput].isChecked, ywinput))
+		self.RL[ywinput].toggled.connect(lambda: self.update_graph_handler(self.RL[ywinput].isChecked, ywinput))
+		self.TB[ywinput].toggled.connect(lambda: self.update_graph_handler(self.TB[ywinput].isChecked, ywinput))
+		self.BT[ywinput].toggled.connect(lambda: self.update_graph_handler(self.BT[ywinput].isChecked, ywinput))
 		self.LayoutBox.setLayout(self.templayout)
-		self.graphoptions.addWidget(self.LayoutBox)
+		self.graphoptions[ywinput].addWidget(self.LayoutBox)
 
 		### Port Layout
 		self.PortLayoutBox = QtGui.QGroupBox('Port Layout')
-		self.portGroup = QtGui.QRadioButton('Group')
-		self.portRelax = QtGui.QRadioButton('Relax')
-		self.portHide = QtGui.QRadioButton('Hide')
+		self.portGroup[ywinput] = QtGui.QRadioButton('Group')
+		self.portRelax[ywinput] = QtGui.QRadioButton('Relax')
+		self.portHide[ywinput] = QtGui.QRadioButton('Hide')
+		self.portGroup[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
-		self.templayout.addWidget(self.portGroup)
-		self.templayout.addWidget(self.portRelax)
-		self.templayout.addWidget(self.portHide)
-		self.portGroup.toggled.connect(self.update_graph_handler)
-		self.portRelax.toggled.connect(self.update_graph_handler)
-		self.portHide.toggled.connect(self.update_graph_handler)
+		self.templayout.addWidget(self.portGroup[ywinput])
+		self.templayout.addWidget(self.portRelax[ywinput])
+		self.templayout.addWidget(self.portHide[ywinput])
+		self.portGroup[ywinput].toggled.connect(lambda: self.update_graph_handler(self.portGroup[ywinput].isChecked, ywinput))
+		self.portRelax[ywinput].toggled.connect(lambda: self.update_graph_handler(self.portRelax[ywinput].isChecked, ywinput))
+		self.portHide[ywinput].toggled.connect(lambda: self.update_graph_handler(self.portHide[ywinput].isChecked, ywinput))
 		self.PortLayoutBox.setLayout(self.templayout)
-		self.graphoptions.addWidget(self.PortLayoutBox)
+		self.graphoptions[ywinput].addWidget(self.PortLayoutBox)
 
 		### Parameters
 		self.ParameterBox = QtGui.QGroupBox('Parameters')
-		self.paraShow = QtGui.QRadioButton('Show')
-		self.paraReduce = QtGui.QRadioButton('Reduce')
-		self.paraHide = QtGui.QRadioButton('Hide')
+		self.paraShow[ywinput] = QtGui.QRadioButton('Show')
+		self.paraReduce[ywinput] = QtGui.QRadioButton('Reduce')
+		self.paraHide[ywinput] = QtGui.QRadioButton('Hide')
+		self.paraHide[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
-		self.templayout.addWidget(self.paraShow)
-		self.templayout.addWidget(self.paraReduce)
-		self.templayout.addWidget(self.paraHide)
-		self.paraShow.toggled.connect(self.update_graph_handler)
-		self.paraReduce.toggled.connect(self.update_graph_handler)
-		self.paraHide.toggled.connect(self.update_graph_handler)
+		self.templayout.addWidget(self.paraShow[ywinput])
+		self.templayout.addWidget(self.paraReduce[ywinput])
+		self.templayout.addWidget(self.paraHide[ywinput])
+		self.paraShow[ywinput].toggled.connect(lambda: self.update_graph_handler(self.paraShow[ywinput].isChecked, ywinput))
+		self.paraReduce[ywinput].toggled.connect(lambda: self.update_graph_handler(self.paraReduce[ywinput].isChecked, ywinput))
+		self.paraHide[ywinput].toggled.connect(lambda: self.update_graph_handler(self.paraHide[ywinput].isChecked, ywinput))
 		self.ParameterBox.setLayout(self.templayout)
-		self.graphoptions.addWidget(self.ParameterBox)
+		self.graphoptions[ywinput].addWidget(self.ParameterBox)
 
 		### Graph Title Position
 		self.titleBox = QtGui.QGroupBox('Title Position')
-		self.titleTop = QtGui.QRadioButton('Top')
-		self.titleBottom = QtGui.QRadioButton('Bottom')
-		self.titleHide = QtGui.QRadioButton('Hide')
+		self.titleTop[ywinput] = QtGui.QRadioButton('Top')
+		self.titleBottom[ywinput] = QtGui.QRadioButton('Bottom')
+		self.titleHide[ywinput] = QtGui.QRadioButton('Hide')
+		self.titleTop[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
-		self.templayout.addWidget(self.titleTop)
-		self.templayout.addWidget(self.titleBottom)
-		self.templayout.addWidget(self.titleHide)
-		self.titleTop.toggled.connect(self.update_graph_handler)
-		self.titleBottom.toggled.connect(self.update_graph_handler)
-		self.titleHide.toggled.connect(self.update_graph_handler)
+		self.templayout.addWidget(self.titleTop[ywinput])
+		self.templayout.addWidget(self.titleBottom[ywinput])
+		self.templayout.addWidget(self.titleHide[ywinput])
+		self.titleTop[ywinput].toggled.connect(lambda: self.update_graph_handler(self.titleTop[ywinput].isChecked, ywinput))
+		self.titleBottom[ywinput].toggled.connect(lambda: self.update_graph_handler(self.titleBottom[ywinput].isChecked, ywinput))
+		self.titleHide[ywinput].toggled.connect(lambda: self.update_graph_handler(self.titleHide[ywinput].isChecked, ywinput))
 		self.titleBox.setLayout(self.templayout)
-		self.graphoptions.addWidget(self.titleBox)
+		self.graphoptions[ywinput].addWidget(self.titleBox)
 
 		# add widgets to the layouts
-		self.vlayout_1.addWidget(self.lbl_1)
-		self.hlayout_1.addLayout(self.graphoptions)
+		self.scrollArea = QtGui.QScrollArea()
+		self.scrollArea.setGeometry(QtCore.QRect(10, 10, 201, 121))
+		self.scrollArea.setWidgetResizable(True)
+		self.scrollAreaWidgetContents = QtGui.QWidget()
+		self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 199, 119))
+		self.lbl_1[ywinput] = QWebView(self.scrollAreaWidgetContents)
+		######### ZOOM FUNCTIONALITY ##############
+		self.lbl_1[ywinput].zoomIn = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+="), self.lbl_1[ywinput], activated = lambda: self.lbl_1[ywinput].setZoomFactor(self.lbl_1[ywinput].zoomFactor()+.05))
+		self.zoomOut = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+-"), self.lbl_1[ywinput], activated = lambda: self.lbl_1[ywinput].setZoomFactor(self.lbl_1[ywinput].zoomFactor()-.05))
+		self.zoomNormal = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+0"), self.lbl_1[ywinput], activated = lambda: self.lbl_1[ywinput].setZoomFactor(0.8))
+
+		self.scrollArea.setWidget(self.lbl_1[ywinput])
+		self.vlayout_1.addWidget(self.scrollArea)
+		#self.graphoptions[ywinput].setWidgetResizable(False)
+		self.hlayout_1.addLayout(self.graphoptions[ywinput])
 		self.hlayout_1.addLayout(self.vlayout_1)
-		self.ui.tabData.addTab(self.NewTab, ywinput)
-		pixmap = QtGui.QPixmap(ywinput)
-		self.lbl_1.setPixmap(pixmap)
+		count = self.ui.tabData.count()
+		self.ui.tabData.addTab(self.NewTab[ywinput], ywinput)
+		self.ui.tabData.tabBar().setTabTextColor(count, QtCore.Qt.red)
+		path = "file:///"
+		path += os.path.abspath(ywinput)
+		path = QtCore.QString(path)
+		self.lbl_1[ywinput].load(QtCore.QUrl(path))
+		# C:\Users\aznboy1029\Desktop\YesWorkflow\simulate_data_collection(1).svg
+		#pixmap = QtGui.QPixmap(ywinput)
+		#self.lbl_1[ywinput].setPixmap(pixmap)
 
-	def update_graph_handler(self, enabled):
+	def update_graph_handler(self, enabled, ywinput):
+		#print enabled
 		if enabled:
-			self.update_graph()
+			self.update_graph(ywinput)
 
-	def update_graph(self):
-		#print "graphing"
+	def update_graph(self, ywinput):
 		ywcommand = 'java -jar ' + os.environ['YW_JAR_PATH'] + ' graph'
-		i = self.ui.tabData.currentIndex()
-		ywinput = str(self.ui.tabData.tabText(i))
+		raw_ywinput = ywinput
 		ywinput = ywinput.split('(')[0]
-		#ywinput = re.sub('\.svg$', '', ywinput)
 		ywinput += '.py'
-		print ywinput
+		ywextension = self.retrieveArgs(raw_ywinput)
+		ywcommand += ywextension
 		ywcommand += ' ' + ywinput + ' | dot -Tsvg -o '
 		ywinput = re.sub('\.py$', '', ywinput)
 		ywinput += str(self.ui.tabData.currentIndex())
 		ywinput += '.svg'
-		ywcommand += ywinput
+		ywcommand += raw_ywinput
 		os.system(ywcommand)
-		pixmap = QtGui.QPixmap(ywinput)
-		self.lbl_1.setPixmap(pixmap)
+		path = "file:///"
+		path += os.path.abspath(raw_ywinput)
+		self.lbl_1[raw_ywinput].load(QtCore.QUrl(path))
+
+	def retrieveArgs(self, ywinput):
+		returned = ''
+		if self.tabProcessView[ywinput].isChecked():
+			returned += ' -c graph.view=PROCESS'
+		elif self.tabDataView[ywinput].isChecked():
+			returned += ' -c graph.view=DATA'
+		elif self.tabCombinedView[ywinput].isChecked():
+			returned += ' -c graph.view=COMBINED'
+		if not self.tabShowWorkflowBox[ywinput].isChecked():
+			returned += ' -c graph.workflowbox=HIDE'
+		if self.tabNameLabel[ywinput].isChecked():
+			if self.tabURILabel[ywinput].isChecked():
+				returned += ' -c graph.datalabel=BOTH'
+			else:
+				returned += ' -c graph.datalabel=NAME'
+		elif self.tabURILabel[ywinput].isChecked():
+			returned += ' -c graph.datalabel=URI'
+		if not self.tabShowEdgeLabels[ywinput].isChecked():
+			returned += ' -c graph.edgelabels=HIDE'
+		if self.LR[ywinput].isChecked():
+			returned += ' -c graph.layout=LR'
+		elif self.RL[ywinput].isChecked():
+			returned += ' -c graph.layout=RL'
+		elif self.TB[ywinput].isChecked():
+			returned += ' -c graph.layout=TB'
+		elif self.BT[ywinput].isChecked():
+			returned += ' -c graph.layout=BT'
+		if self.portGroup[ywinput].isChecked():
+			returned += ' -c graph.portlayout=GROUP'
+		elif self.portRelax[ywinput].isChecked():
+			returned += ' -c graph.portlayout=RELAX'
+		elif self.portHide[ywinput].isChecked():
+			returned += ' -c graph.portlayout=HIDE'
+		if self.paraShow[ywinput].isChecked():
+			returned += ' -c graph.params=SHOW'
+		elif self.paraReduce[ywinput].isChecked():
+			returned += ' -c graph.params=REDUCE'
+		elif self.paraHide[ywinput].isChecked():
+			returned += ' -c graph.params=HIDE'
+		if self.titleTop[ywinput].isChecked():
+			returned += ' -c graph.titleposition=TOP'
+		elif self.titleBottom[ywinput].isChecked():
+			returned += ' -c graph.titleposition=BOTTOM'
+		elif self.titleHide[ywinput].isChecked():
+			returned += ' -c graph.titleposition=HIDE'
+		return returned
+
 
 if __name__ == '__main__':
 	app = QtGui.QApplication(sys.argv)
-	"""dirWatcher=threading.Thread(target=watchdog)
-	dirWatcher.daemon = True
-	dirWatcher.start()"""
 	window = Main()
 	window.show()
+	#window.showMaximized()
 	sys.exit(app.exec_())

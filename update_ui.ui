@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>697</width>
-    <height>904</height>
+    <width>658</width>
+    <height>646</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <property name="tabsClosable">
        <bool>true</bool>
@@ -36,494 +36,66 @@
        <attribute name="title">
         <string>YW Tools</string>
        </attribute>
-       <widget class="QLabel" name="label_4">
-        <property name="geometry">
-         <rect>
-          <x>9</x>
-          <y>9</y>
-          <width>119</width>
-          <height>16</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Files in Current Directory</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="btnSortPy">
-        <property name="geometry">
-         <rect>
-          <x>9</x>
-          <y>28</y>
-          <width>75</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Show .py files</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="btnShowAllFiles">
-        <property name="geometry">
-         <rect>
-          <x>9</x>
-          <y>57</y>
-          <width>75</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Show all files</string>
-        </property>
-       </widget>
-       <widget class="QListWidget" name="txtYWGraph">
-        <property name="geometry">
-         <rect>
-          <x>9</x>
-          <y>86</y>
-          <width>321</width>
-          <height>190</height>
-         </rect>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="btnYWExtract">
-        <property name="geometry">
-         <rect>
-          <x>9</x>
-          <y>282</y>
-          <width>75</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>YW Extract</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="btnModel">
-        <property name="geometry">
-         <rect>
-          <x>9</x>
-          <y>311</y>
-          <width>75</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>YW Model</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label">
-        <property name="geometry">
-         <rect>
-          <x>9</x>
-          <y>340</y>
-          <width>63</width>
-          <height>16</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Message Box</string>
-        </property>
-       </widget>
-       <widget class="QTextBrowser" name="txtErrorBox">
-        <property name="geometry">
-         <rect>
-          <x>9</x>
-          <y>359</y>
-          <width>321</width>
-          <height>191</height>
-         </rect>
-        </property>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="tab_4">
-       <attribute name="title">
-        <string>Graph</string>
-       </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_19">
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout">
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
           <item>
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Select a Python file to render:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QListWidget" name="txtYWGraph_2"/>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_15">
+           <layout class="QVBoxLayout" name="verticalLayout">
             <item>
-             <spacer name="horizontalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="btnShowAllFiles_2">
+             <widget class="QLabel" name="label_4">
               <property name="text">
-               <string>Show all files</string>
+               <string>Files in Current Directory</string>
               </property>
              </widget>
             </item>
             <item>
-             <spacer name="horizontalSpacer">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>50</width>
-                <height>0</height>
-               </size>
-              </property>
-             </spacer>
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <item>
+               <widget class="QPushButton" name="btnShowAllFiles">
+                <property name="text">
+                 <string>Show all files</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnSortPy">
+                <property name="text">
+                 <string>Show .py files</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
-             <widget class="QPushButton" name="btnSortPy_2">
+             <widget class="QListWidget" name="txtYWGraph"/>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <widget class="QPushButton" name="btnYWExtract">
+                <property name="text">
+                 <string>YW Extract</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnModel">
+                <property name="text">
+                 <string>YW Model</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QLabel" name="label">
               <property name="text">
-               <string>Show .py files</string>
+               <string>Message Box</string>
               </property>
              </widget>
             </item>
             <item>
-             <spacer name="horizontalSpacer_3">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_16"/>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_10">
-            <item>
-             <widget class="QGroupBox" name="boxView">
-              <property name="title">
-               <string>Workflow View</string>
-              </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_14">
-               <item>
-                <widget class="QRadioButton" name="btnProcessView">
-                 <property name="text">
-                  <string>Process</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QRadioButton" name="btnDataView">
-                 <property name="text">
-                  <string>Data</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QRadioButton" name="btnCombinedView">
-                 <property name="text">
-                  <string>Combined</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <item>
-             <widget class="QGroupBox" name="boxWorkflow">
-              <property name="title">
-               <string>Workflow Box</string>
-              </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_8">
-               <item>
-                <widget class="QCheckBox" name="chkWorkflowShow">
-                 <property name="text">
-                  <string>Show</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_5">
-            <item>
-             <widget class="QGroupBox" name="boxLabel">
-              <property name="title">
-               <string>Data Label</string>
-              </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_2">
-               <item>
-                <widget class="QCheckBox" name="chkNameLabel">
-                 <property name="text">
-                  <string>Name</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QCheckBox" name="chkURILabel">
-                 <property name="text">
-                  <string>URI</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <item>
-             <widget class="QGroupBox" name="boxEdge">
-              <property name="title">
-               <string>Edge Labels</string>
-              </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_7">
-               <item>
-                <widget class="QCheckBox" name="chkLabelShow">
-                 <property name="text">
-                  <string>Show</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="boxLayout">
-            <property name="title">
-             <string>Layout</string>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_11">
-             <item>
-              <widget class="QRadioButton" name="btnLRLayout">
-               <property name="text">
-                <string>Left-Right</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="btnRLLayout">
-               <property name="text">
-                <string>Right-Left</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="btnTBLayout">
-               <property name="text">
-                <string>Top-Bottom</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="btnBTLayout">
-               <property name="text">
-                <string>Bottom-Top</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="boxPortLayout">
-            <property name="title">
-             <string>Port Layout</string>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_13">
-             <item>
-              <widget class="QRadioButton" name="btnPortGroup">
-               <property name="text">
-                <string>Group</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="btnPortRelax">
-               <property name="text">
-                <string>Relax</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="btnPortHide">
-               <property name="text">
-                <string>Hide</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="boxParameter">
-            <property name="title">
-             <string>Parameters</string>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_12">
-             <item>
-              <widget class="QRadioButton" name="btnParamShow">
-               <property name="text">
-                <string>Show</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="btnParamReduce">
-               <property name="text">
-                <string>Reduce</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="btnParamHide">
-               <property name="text">
-                <string>Hide</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="groupBox">
-            <property name="title">
-             <string>Graph Title Position</string>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout">
-             <item>
-              <widget class="QRadioButton" name="btnTopTitle">
-               <property name="text">
-                <string>Top</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="btnBottomTitle">
-               <property name="text">
-                <string>Bottom</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QRadioButton" name="btnHideTitle">
-               <property name="text">
-                <string>Hide</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="groupBox_4">
-            <property name="title">
-             <string>Graph Title Name</string>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_3">
-             <item>
-              <widget class="QCheckBox" name="btnRename">
-               <property name="text">
-                <string>Rename graph to:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="txtRename"/>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="groupBox_3">
-            <property name="title">
-             <string>Export To .DOT File</string>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_6">
-             <item>
-              <widget class="QCheckBox" name="btnExport">
-               <property name="text">
-                <string>Export to</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="txtExportDOT"/>
-             </item>
-             <item>
-              <widget class="QGroupBox" name="groupBox_2">
-               <property name="title">
-                <string>.DOT Files Comments</string>
-               </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_4">
-                <item>
-                 <widget class="QCheckBox" name="chkShowComments">
-                  <property name="text">
-                   <string>Show</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_17">
-            <item>
-             <spacer name="horizontalSpacer_4">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
+             <widget class="QTextBrowser" name="txtErrorBox"/>
             </item>
             <item>
              <widget class="QPushButton" name="btnYWGraph">
@@ -532,104 +104,91 @@
               </property>
              </widget>
             </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
-             <spacer name="horizontalSpacer_5">
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>Message Box</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTextBrowser" name="WatchText"/>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_18">
+              <item>
+               <spacer name="horizontalSpacer_6">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnRunYW">
+                <property name="text">
+                 <string>Help</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_7">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnClearWatchText">
+                <property name="text">
+                 <string>Clear</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_8">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Vertical</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
-                <width>40</width>
-                <height>20</height>
+                <width>20</width>
+                <height>40</height>
                </size>
               </property>
              </spacer>
             </item>
            </layout>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <item>
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>Message Box</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QTextBrowser" name="WatchText"/>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_18">
-            <item>
-             <spacer name="horizontalSpacer_6">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="btnRunYW">
-              <property name="text">
-               <string>Help</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_7">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="btnClearWatchText">
-              <property name="text">
-               <string>Clear</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_8">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
         </item>
@@ -644,7 +203,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>697</width>
+     <width>658</width>
      <height>21</height>
     </rect>
    </property>
