@@ -9,6 +9,7 @@ import logging
 import subprocess
 import os
 import re
+import shutil
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 import threading
@@ -22,6 +23,14 @@ except AttributeError:
 #graphs = dict()
 
 files = sorted([f for f in os.listdir('.') if os.path.isfile(f)])
+
+"""class SVG_Event_Handler(QObject):
+	def __init__(self, parent=None):
+		super(SVG_Event_Handler, self)__init__(parent)
+
+	@pyqtSlot(str)
+	def print_to_message_box(self, svg_tab, event_string):
+"""
 
 class Watch_Thread(QtCore.QThread):
 	updated = QtCore.pyqtSignal(str)
@@ -68,6 +77,15 @@ class Watch_Thread(QtCore.QThread):
 
 class Main(QtGui.QMainWindow):
 
+	"""class svg_handler(QtCore.QObject):
+		def __init__(self, parent=None):
+			super(QtCore.QObject, self).__init__(parent)
+
+		@QtCore.pyqtSlot(str)
+		def display_node(self, message, ywinput):
+			self.nodedisplay[ywinput].text(message)
+			print 'reached display_node'"""
+
 	def __init__(self):
 		QtGui.QMainWindow.__init__(self)
 		self.ui = Ui_MainWindow()
@@ -87,6 +105,15 @@ class Main(QtGui.QMainWindow):
 		self.currentGraphs = dict()
 		self.initTabKeys()
 		self.initNewTabWidgets()
+
+	@QtCore.pyqtSlot(str)
+	def update_svg_window(self, input):
+		themessage = input.split(' ')
+		ywinput = str(themessage[1])
+		message = themessage[0]
+		self.nodedisplay[ywinput].setText(message)
+		fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '.')
+		self.nodedisplay[ywinput].setText(fname)
 
 	def update_tab_color(self, tab_index):
 		self.ui.tabData.tabBar().setTabTextColor(tab_index, QtCore.Qt.black)
@@ -128,6 +155,7 @@ class Main(QtGui.QMainWindow):
 		self.zoomIn = dict()
 		self.zoomOut = dict()
 		self.zoomNormal = dict()
+		self.nodedisplay = dict()
 
 	def initTabKeys(self):
 		self.graphCount['YW Tools'] = 1
@@ -137,12 +165,10 @@ class Main(QtGui.QMainWindow):
 		self.ui.WatchText.clear()
 
 	def WatchdogReceiver(self, text):
-		print text
 		received = text.split(' ')
 		change = str(received[1])
 		changed_file = str(received[0].split("\\")[-1])
 		changed_file = re.sub('\.py$', '', changed_file)
-		# ywinput = re.sub('\.py$', '', ywinput)
 		if changed_file in self.graphCount:
 			if change == "modified":
 				self.tryUpdatingGraphs(changed_file)
@@ -193,17 +219,13 @@ class Main(QtGui.QMainWindow):
 		else:
 			error_message = "The file, " + ywinput + " is not located in the current directory"
 			self.ui.txtErrorBox.insertPlainText(error_message)
-		yw = 1
-		#print self.watcher_Thread.MyHandler.patterns
 
 	def btnYWGraph(self):
-		#self.ui.txtErrorBox.clear()
 		fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '.')
 		yw_fname = fname.split('/')[-1]
 		ywcommand = 'java -jar ' + os.environ['YW_JAR_PATH'] + ' graph '
 		ywinput = ''
 		ywinput = str(yw_fname)
-		print ywinput
 		if ywinput in files:
 			ywcommand += ywinput + ' | dot -Tsvg -o '
 			ywinput = re.sub('\.py$', '', ywinput)
@@ -222,7 +244,6 @@ class Main(QtGui.QMainWindow):
 			ywinput += ')'
 			ywinput += '.svg'
 			ywcommand += ywinput
-			#print ywcommand
 			os.system(ywcommand)
 			self.makeNewTab(ywcommand, ywinput)
 		else:
@@ -235,6 +256,32 @@ class Main(QtGui.QMainWindow):
 			i += 1
 		return i
 
+	def modifySVGFile(self, filename):
+		filename = str(filename)
+		file_w = os.path.abspath(filename)
+		file_r = os.path.abspath(filename + '~')
+		shutil.move(file_w, file_r)
+		destination = open(file_w, "w")
+		source = open(file_r, "r")
+		for line in source:
+			if 'file:' in line:
+				newline = line
+				arrayline = newline.split('<text ')
+				insert = '<text ' + 'onclick="node_displayer.update_svg_window('
+				nodename_temp = line.split('file:')
+				nodename_temp = nodename_temp[1].split('</text>')[0]
+				insert += "'" + nodename_temp
+				insert += ' ' + filename + "'"
+				insert += ')" '
+				newline = insert + arrayline[1]
+				destination.write(newline)
+			else:
+				destination.write(line)
+		source.close()
+		destination.close()
+		temp_file = open(file_w, "r")
+		html = temp_file.read()
+		return html
 
 	def makeNewTab(self, ywcommand, ywinput):
 		# adds a new tab to the tab widget
@@ -365,6 +412,10 @@ class Main(QtGui.QMainWindow):
 		self.titleBox.setLayout(self.templayout)
 		self.graphoptions[ywinput].addWidget(self.titleBox)
 
+		########
+		self.nodedisplay[ywinput] = QtGui.QLabel('this is the node')
+		self.graphoptions[ywinput].addWidget(self.nodedisplay[ywinput])
+
 		# add widgets to the layouts
 		self.scrollArea = QtGui.QScrollArea()
 		self.scrollArea.setGeometry(QtCore.QRect(10, 10, 201, 121))
@@ -372,14 +423,14 @@ class Main(QtGui.QMainWindow):
 		self.scrollAreaWidgetContents = QtGui.QWidget()
 		self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 199, 119))
 		self.lbl_1[ywinput] = QWebView(self.scrollAreaWidgetContents)
-		######### ZOOM FUNCTIONALITY ##############
+		
+		# Zoom Functionality for the webview
 		self.lbl_1[ywinput].zoomIn = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+="), self.lbl_1[ywinput], activated = lambda: self.lbl_1[ywinput].setZoomFactor(self.lbl_1[ywinput].zoomFactor()+.05))
 		self.zoomOut = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+-"), self.lbl_1[ywinput], activated = lambda: self.lbl_1[ywinput].setZoomFactor(self.lbl_1[ywinput].zoomFactor()-.05))
 		self.zoomNormal = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+0"), self.lbl_1[ywinput], activated = lambda: self.lbl_1[ywinput].setZoomFactor(0.8))
 
 		self.scrollArea.setWidget(self.lbl_1[ywinput])
 		self.vlayout_1.addWidget(self.scrollArea)
-		#self.graphoptions[ywinput].setWidgetResizable(False)
 		self.hlayout_1.addLayout(self.graphoptions[ywinput])
 		self.hlayout_1.addLayout(self.vlayout_1)
 		count = self.ui.tabData.count()
@@ -388,13 +439,12 @@ class Main(QtGui.QMainWindow):
 		path = "file:///"
 		path += os.path.abspath(ywinput)
 		path = QtCore.QString(path)
-		self.lbl_1[ywinput].load(QtCore.QUrl(path))
-		# C:\Users\aznboy1029\Desktop\YesWorkflow\simulate_data_collection(1).svg
-		#pixmap = QtGui.QPixmap(ywinput)
-		#self.lbl_1[ywinput].setPixmap(pixmap)
+		html_code = self.modifySVGFile(ywinput)
+		self.lbl_1[ywinput].setHtml(html_code)
+		frame = self.lbl_1[ywinput].page().mainFrame()
+		frame.addToJavaScriptWindowObject('node_displayer', self)
 
 	def update_graph_handler(self, enabled, ywinput):
-		#print enabled
 		if enabled:
 			self.update_graph(ywinput)
 
@@ -411,9 +461,12 @@ class Main(QtGui.QMainWindow):
 		ywinput += '.svg'
 		ywcommand += raw_ywinput
 		os.system(ywcommand)
+		html_code = self.modifySVGFile(raw_ywinput)
 		path = "file:///"
 		path += os.path.abspath(raw_ywinput)
-		self.lbl_1[raw_ywinput].load(QtCore.QUrl(path))
+		self.lbl_1[raw_ywinput].setHtml(html_code)
+		frame = self.lbl_1[raw_ywinput].page().mainFrame()
+		frame.addToJavaScriptWindowObject('node_displayer', self)
 
 	def retrieveArgs(self, ywinput):
 		returned = ''
@@ -467,5 +520,4 @@ if __name__ == '__main__':
 	app = QtGui.QApplication(sys.argv)
 	window = Main()
 	window.show()
-	#window.showMaximized()
 	sys.exit(app.exec_())
