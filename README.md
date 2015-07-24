@@ -37,7 +37,7 @@ Yes Workflow is the tool that yw-gui utilizes to render the scripts into workflo
 The GUI references the jar file, yesworkflow-0.2-SNAPSHOT-jar-with-dependencies.jar, as YW_JAR_PATH. Add these to your environment variables on Windows by opening Control Panel, Navigating to System and Security, System, and Advanced system settings. From here open your Environment Variables and add a new variable under the name 'YW_JAR_PATH' and make the Value the path to your jar file. For example, '{Working Directory}/yesworkflow-0.2-SNAPSHOT-jar-with-dependencies.jar'.
 
 
-Running (Windows supported right now)
+Running (Windows)
 -------
 
 ### Preparing your scripts
