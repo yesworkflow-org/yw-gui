@@ -3,16 +3,9 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtWebKit import *
 from PyQt4.QtSvg import *
 from update_ui import Ui_MainWindow
-import time, Queue
-import shlex
-import logging
-import subprocess
-import os
-import re
-import shutil
+import time, Queue, shlex, logging, subprocess, os, re, shutil, threading
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-import threading
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -20,17 +13,7 @@ except AttributeError:
     def _fromUtf8(s):
         return s
 
-#graphs = dict()
-
 files = sorted([f for f in os.listdir('.') if os.path.isfile(f)])
-
-"""class SVG_Event_Handler(QObject):
-	def __init__(self, parent=None):
-		super(SVG_Event_Handler, self)__init__(parent)
-
-	@pyqtSlot(str)
-	def print_to_message_box(self, svg_tab, event_string):
-"""
 
 class Watch_Thread(QtCore.QThread):
 	updated = QtCore.pyqtSignal(str)
@@ -77,15 +60,6 @@ class Watch_Thread(QtCore.QThread):
 
 class Main(QtGui.QMainWindow):
 
-	"""class svg_handler(QtCore.QObject):
-		def __init__(self, parent=None):
-			super(QtCore.QObject, self).__init__(parent)
-
-		@QtCore.pyqtSlot(str)
-		def display_node(self, message, ywinput):
-			self.nodedisplay[ywinput].text(message)
-			print 'reached display_node'"""
-
 	def __init__(self):
 		QtGui.QMainWindow.__init__(self)
 		self.ui = Ui_MainWindow()
@@ -93,12 +67,8 @@ class Main(QtGui.QMainWindow):
 		self.watcher_Thread = Watch_Thread(self)
 		self.watcher_Thread.updated.connect(self.WatchdogReceiver)
 		self.watcher_Thread.start()
-		self.ui.btnRunYW.clicked.connect(self.btnStartYW)
 		self.ui.btnYWExtract.clicked.connect(self.btnYWExtract)
 		self.ui.btnYWGraph.clicked.connect(self.btnYWGraph)
-		self.ui.btnSortPy.clicked.connect(self.btnSortPy)
-		self.ui.btnShowAllFiles.clicked.connect(self.btnShowAllFiles)
-		self.ui.btnClearWatchText.clicked.connect(self.btnClearWatchText)
 		self.ui.tabData.tabCloseRequested.connect(self.closeTab)
 		self.ui.tabData.connect(self.ui.tabData, QtCore.SIGNAL('currentChanged(int)'), self.update_tab_color)
 		self.graphCount = dict()
@@ -110,10 +80,30 @@ class Main(QtGui.QMainWindow):
 	def update_svg_window(self, input):
 		themessage = input.split(' ')
 		ywinput = str(themessage[1])
-		message = themessage[0]
+		message = str(themessage[0])
 		self.nodedisplay[ywinput].setText(message)
-		fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '.')
-		self.nodedisplay[ywinput].setText(fname)
+		if '{' in message:
+			newmessage = message.split('{')[0]
+			if '/' in newmessage:
+				newmessage = newmessage.rsplit('/', 1)[0]
+				filename = QtGui.QFileDialog.getOpenFileName(self, 'Open File', newmessage)
+				thepath = os.path.abspath(filename)
+				os.startfile(thepath)
+				self.nodedisplay[ywinput].setText(filename)
+			else:
+				filename = QtGui.QFileDialog.getOpenFileName(self, 'Open File', '.')
+				self.nodedisplay[ywinput].setText(filename)
+				thepath = os.path.abspath(filename)
+				os.startfile(thepath)
+		else:
+			if '/' in message:
+				cwd = os.getcwd()
+				print cwd
+				cwd += '/' + message
+				os.startfile(cwd)
+			else:
+				thepath = os.path.abspath(message)
+				os.startfile(thepath)
 
 	def update_tab_color(self, tab_index):
 		self.ui.tabData.tabBar().setTabTextColor(tab_index, QtCore.Qt.black)
@@ -207,18 +197,18 @@ class Main(QtGui.QMainWindow):
 	def btnYWExtract(self):
 		self.ui.txtErrorBox.clear()
 		ywcommand = ['java', '-jar', 'yesworkflow-0.2-SNAPSHOT-jar-with-dependencies.jar']
-		ywinput = str(self.ui.txtYWGraph.currentItem().text())
-		if ywinput in files:
-			ywcommand.append('extract')
-			ywcommand.append(ywinput)
-			ywcommand.append('-c')
-			ywcommand.append('extract.listfile')
-			p = subprocess.Popen(ywcommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-			(p_out, p_err) = p.communicate()
-			self.ui.txtErrorBox.insertPlainText(p_out)
-		else:
+		ywinput = str(QtGui.QFileDialog.getOpenFileName(self, 'Open file', '.'))
+		#if ywinput in files:
+		ywcommand.append('extract')
+		ywcommand.append(ywinput)
+		ywcommand.append('-c')
+		ywcommand.append('extract.listfile')
+		p = subprocess.Popen(ywcommand, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+		(p_out, p_err) = p.communicate()
+		self.ui.txtErrorBox.insertPlainText(p_out)
+		"""else:
 			error_message = "The file, " + ywinput + " is not located in the current directory"
-			self.ui.txtErrorBox.insertPlainText(error_message)
+			self.ui.txtErrorBox.insertPlainText(error_message)"""
 
 	def btnYWGraph(self):
 		fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file', '.')
@@ -227,7 +217,12 @@ class Main(QtGui.QMainWindow):
 		ywinput = ''
 		ywinput = str(yw_fname)
 		if ywinput in files:
-			ywcommand += ywinput + ' | dot -Tsvg -o '
+			ywfilename = ywinput.split('.py')[0]
+			ywcommand += ywinput + ' -c graph.dotfile=' + ywfilename + '.gv'
+			ywcommand += ' -c graph.view=PROCESS -c graph.datalabel=BOTH -c graph.edgelabels=HIDE'
+			ywcommand += ' -c graph.layout=TB -c graph.portlayout=HIDE -c graph.params=REDUCE -c graph.titleposition=HIDE'
+			ywcommand += ' -c graph.workflowbox=SHOW'
+			ywaftercommand = 'dot -Tsvg ' + ywfilename + '.gv > '
 			ywinput = re.sub('\.py$', '', ywinput)
 			if ywinput not in self.graphCount:
 				self.graphCount[ywinput] = []
@@ -243,8 +238,9 @@ class Main(QtGui.QMainWindow):
 			ywinput += str(count)
 			ywinput += ')'
 			ywinput += '.svg'
-			ywcommand += ywinput
 			os.system(ywcommand)
+			ywaftercommand += ywinput
+			os.system(ywaftercommand)
 			self.makeNewTab(ywcommand, ywinput)
 		else:
 			error_message = "The file, " + ywinput + " is not located in the current directory"
@@ -327,6 +323,7 @@ class Main(QtGui.QMainWindow):
 		self.tabNameLabel[ywinput] = QtGui.QCheckBox('Name')
 		self.tabURILabel[ywinput] = QtGui.QCheckBox('URI')
 		self.tabNameLabel[ywinput].setChecked(True)
+		self.tabURILabel[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
 		self.templayout.addWidget(self.tabNameLabel[ywinput])
 		self.templayout.addWidget(self.tabURILabel[ywinput])
@@ -338,7 +335,7 @@ class Main(QtGui.QMainWindow):
 		### Show Edge Labels
 		self.ShowEdgeLabel = QtGui.QGroupBox('Edge Labels')
 		self.tabShowEdgeLabels[ywinput] = QtGui.QCheckBox('Show')
-		self.tabShowEdgeLabels[ywinput].setChecked(True)
+		self.tabShowEdgeLabels[ywinput].setChecked(False)
 		self.templayout = QtGui.QHBoxLayout()
 		self.templayout.addWidget(self.tabShowEdgeLabels[ywinput])
 		self.tabShowEdgeLabels[ywinput].toggled.connect(lambda: self.update_graph(ywinput))
@@ -351,7 +348,7 @@ class Main(QtGui.QMainWindow):
 		self.RL[ywinput] = QtGui.QRadioButton('Right-Left')
 		self.TB[ywinput] = QtGui.QRadioButton('Top-Bottom')
 		self.BT[ywinput] = QtGui.QRadioButton('Bottom-Top')
-		self.LR[ywinput].setChecked(True)
+		self.TB[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
 		self.templayout.addWidget(self.LR[ywinput])
 		self.templayout.addWidget(self.RL[ywinput])
@@ -369,7 +366,7 @@ class Main(QtGui.QMainWindow):
 		self.portGroup[ywinput] = QtGui.QRadioButton('Group')
 		self.portRelax[ywinput] = QtGui.QRadioButton('Relax')
 		self.portHide[ywinput] = QtGui.QRadioButton('Hide')
-		self.portGroup[ywinput].setChecked(True)
+		self.portHide[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
 		self.templayout.addWidget(self.portGroup[ywinput])
 		self.templayout.addWidget(self.portRelax[ywinput])
@@ -385,7 +382,7 @@ class Main(QtGui.QMainWindow):
 		self.paraShow[ywinput] = QtGui.QRadioButton('Show')
 		self.paraReduce[ywinput] = QtGui.QRadioButton('Reduce')
 		self.paraHide[ywinput] = QtGui.QRadioButton('Hide')
-		self.paraHide[ywinput].setChecked(True)
+		self.paraReduce[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
 		self.templayout.addWidget(self.paraShow[ywinput])
 		self.templayout.addWidget(self.paraReduce[ywinput])
@@ -401,7 +398,7 @@ class Main(QtGui.QMainWindow):
 		self.titleTop[ywinput] = QtGui.QRadioButton('Top')
 		self.titleBottom[ywinput] = QtGui.QRadioButton('Bottom')
 		self.titleHide[ywinput] = QtGui.QRadioButton('Hide')
-		self.titleTop[ywinput].setChecked(True)
+		self.titleHide[ywinput].setChecked(True)
 		self.templayout = QtGui.QHBoxLayout()
 		self.templayout.addWidget(self.titleTop[ywinput])
 		self.templayout.addWidget(self.titleBottom[ywinput])
@@ -412,8 +409,8 @@ class Main(QtGui.QMainWindow):
 		self.titleBox.setLayout(self.templayout)
 		self.graphoptions[ywinput].addWidget(self.titleBox)
 
-		########
-		self.nodedisplay[ywinput] = QtGui.QLabel('this is the node')
+		#Node that is clicked
+		self.nodedisplay[ywinput] = QtGui.QLabel('')
 		self.graphoptions[ywinput].addWidget(self.nodedisplay[ywinput])
 
 		# add widgets to the layouts
@@ -451,16 +448,18 @@ class Main(QtGui.QMainWindow):
 	def update_graph(self, ywinput):
 		ywcommand = 'java -jar ' + os.environ['YW_JAR_PATH'] + ' graph'
 		raw_ywinput = ywinput
+		ywfilename = ywinput.split('(')[0]
 		ywinput = ywinput.split('(')[0]
 		ywinput += '.py'
 		ywextension = self.retrieveArgs(raw_ywinput)
 		ywcommand += ywextension
-		ywcommand += ' ' + ywinput + ' | dot -Tsvg -o '
+		ywcommand += ' ' + ywinput + ' -c graph.dotfile=' + ywfilename + '.gv'
 		ywinput = re.sub('\.py$', '', ywinput)
 		ywinput += str(self.ui.tabData.currentIndex())
 		ywinput += '.svg'
-		ywcommand += raw_ywinput
 		os.system(ywcommand)
+		ywaftercommand = 'dot -Tsvg ' + ywfilename + '.gv > ' + raw_ywinput
+		os.system(ywaftercommand)
 		html_code = self.modifySVGFile(raw_ywinput)
 		path = "file:///"
 		path += os.path.abspath(raw_ywinput)
@@ -513,6 +512,7 @@ class Main(QtGui.QMainWindow):
 			returned += ' -c graph.titleposition=BOTTOM'
 		elif self.titleHide[ywinput].isChecked():
 			returned += ' -c graph.titleposition=HIDE'
+		returned += ' -c graph.dotfile=' + ywinput
 		return returned
 
 
